@@ -34,19 +34,19 @@ what motivates more adaptive approaches like the RECESS vaccine.
 ## Files
 
 ```
-clients.py      -- honest clients with gaussian noise, malicious clients 
+clients.py      - honest clients with gaussian noise, malicious clients 
                    with label flipping and random poisoning
-aggregator.py   -- FedAvg and trimmed mean implementations
-simulation.py   -- runs 100 rounds per configuration
-main.py         -- varies malicious ratio from 10% to 80% and plots results
+aggregator.py   - FedAvg and trimmed mean implementations
+simulation.py   - runs 100 rounds per configuration
+main.py         - varies malicious ratio from 10% to 80% and plots results
 ```
 
 ## Attack Types
 
-**Label flipping** -- malicious client reports the exact opposite of the 
+**Label flipping**: malicious client reports the exact opposite of the 
 true value. In a real system this maps to flipping training labels.
 
-**Random poisoning** -- malicious client sends a random value between -10 
+**Random poisoning**: malicious client sends a random value between -10 
 and 10. Models a disruptive attacker who just wants to break things.
 
 ## How the Defense Works
