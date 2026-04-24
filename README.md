@@ -1,69 +1,67 @@
 # Federated Learning Poisoning Attack Simulator
 
-A research simulation exploring how poisoning attacks corrupt federated 
-learning aggregation, and whether coordinate-wise trimmed mean defense 
-can mitigate them.
+I built this to understand how poisoning attacks actually work in federated 
+learning and whether the trimmed mean defense holds up under pressure. 
+Motivated by reading about proactive defense mechanisms in distributed AI 
+systems.
 
-Motivated by poisoning attack literature in federated learning, including
-work on proactive defense mechanisms in distributed AI systems.
+## The Core Idea
 
-## Core Idea
+In federated learning, clients train locally and send updates to a central 
+server. If some clients are malicious they can send poisoned updates to 
+corrupt the global model. This is called a poisoning attack.
 
-In federated learning, multiple clients train locally and send updates to 
-a central server. If some clients are malicious, they can send poisoned 
-updates to corrupt the global model, this is called a **poisoning attack**.
+I simplified this down to the math to understand it clearly:
+- Honest clients report a true value with some natural noise
+- Malicious clients send manipulated values (flipped labels or random garbage)
+- The server tries to recover the true value using two strategies:
+- FedAvg: plain average, fast, works when everyone is honest
+- Trimmed Mean: cuts extreme values before averaging, more robust
 
-This simulator abstracts that threat model down to its mathematical core:
-- Honest clients report a true value with natural Gaussian noise
-- Malicious clients send manipulated values (label flipping or random noise)
-- The aggregator tries to recover the true value using two strategies:
-  - FedAvg: the plain average (vulnerable to poisoning)
-  - Trimmed Mean: discards extreme values before averaging (robust)
-
-## My Findings
+## What I Found
 
 ![Results Chart](results.png)
 
-- At 10-20% malicious clients: trimmed mean reduces error by over 90%
-- At 30% malicious clients: improvement drops sharply to ~38%, so this is where poisoned votes begin surviving the trim threshold
-- At 50% malicious clients: the defense crossover point, trimmed mean 
-  becomes counterproductive
-- Beyond 50%: trimmed mean actively worsens the result due to over-trimming
-  of honest votes
+- At 10-20% malicious clients, trimmed mean cuts error by over 90%. The defense works really well here.
+- At 30% malicious clients, improvement drops to around 38%. Poisoned votes are starting to survive the trim.
+- At 50% malicious clients, trimmed mean stops helping entirely.
+- Beyond 50%, trimmed mean actually makes things worse because it starts cutting honest votes instead of malicious ones.
 
-**Takeaway**: the trim parameter (20%) defines a hard Byzantine fault tolerance boundary (Byzantine faults are when nodes in a distributed system send maliciously incorrect information). The defense effectiveness collapses precisely when malicious clients exceed the trim threshold which isa known limitation that motivates 
-more adaptive defense mechanisms.
+The 20% trim parameter is basically a hard limit. Once malicious clients 
+exceed it the defense collapses. This is a known limitation and part of 
+what motivates more adaptive approaches like the RECESS vaccine.
 
-## Architecture
+## Files
+
 ```
-clients.py      — honest clients (Gaussian noise) and malicious clients
-                  (label flipping, random poisoning)
-aggregator.py   — FedAvg baseline and trimmed mean defense
-simulation.py   — runs experiment across 100 rounds per configuration
-main.py         — varies malicious ratio from 10% to 80%, plots results
+clients.py      -- honest clients with gaussian noise, malicious clients 
+                   with label flipping and random poisoning
+aggregator.py   -- FedAvg and trimmed mean implementations
+simulation.py   -- runs 100 rounds per configuration
+main.py         -- varies malicious ratio from 10% to 80% and plots results
 ```
 
-## Attack Types Modeled
+## Attack Types
 
-**Label flipping**: A malicious client reports exact negation of true value.
-Maps to flipping training labels in real federated learning.
+**Label flipping** -- malicious client reports the exact opposite of the 
+true value. In a real system this maps to flipping training labels.
 
-**Random poisoning**: A malicious client sends random value between -10 
-and 10. Models a maximally disruptive adversary with no knowledge of the 
-true value.
+**Random poisoning** -- malicious client sends a random value between -10 
+and 10. Models a disruptive attacker who just wants to break things.
 
-## Defense Mechanism
+## How the Defense Works
 
-Coordinate-wise trimmed mean with trim=0.2:
-1. Sort all client votes
-2. Discard bottom 20% and top 20%
-3. Average the remaining middle 60%
+Trimmed mean with trim=0.2:
+1. Sort all client updates
+2. Cut the bottom 20% and top 20%
+3. Average what's left
 
-Limitation: when malicious clients exceed the trim fraction, poisoned 
-votes survive into the average. Future work could explore adaptive trim 
-parameters or Byzantine-robust alternatives.
+Works great until malicious clients outnumber the trim buffer. After that 
+point you need something smarter, like tracking client behavior across 
+multiple rounds instead of just looking at one round at a time.
 
 ## Setup
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate
