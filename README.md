@@ -44,7 +44,7 @@ main.py         - varies malicious ratio from 10% to 80% and plots results
 ## Attack Types
 
 **Label flipping**: malicious client reports the exact opposite of the 
-true value. In a real system this maps to flipping training labels.
+true value. 
 
 **Random poisoning**: malicious client sends a random value between -10 
 and 10. Models a disruptive attacker who just wants to break things.
